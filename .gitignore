@@ -1,0 +1,40 @@
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# VS Code (personal workspace settings)
+.vscode/
+
+# --- Python (tools scripts) ---
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# --- Logs / temp files ---
+*.log
+*.tmp
+*.temp
+*.swp
+
+# --- Node / build outputs (falls später genutzt) ---
+node_modules/
+dist/
+build/
+.parcel-cache/
+.cache/
+
+# --- Coverage (falls Tests) ---
+coverage/
+.coverage
+
+tools/

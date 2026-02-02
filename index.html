@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yu-Gi-Oh! Forbidden Memories Fusion Helper</title>
+    <link rel="stylesheet" href="fusions.css?v=1">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="index.html" aria-label="Startseite">
+                <span class="brand-title">Yu-Gi-Oh! FM Helper</span>
+                <span class="brand-subtitle">Tools & Tabellen</span>
+            </a>
+            <nav class="nav" aria-label="Navigation">
+                <a class="active" href="index.html">Fusionen</a>
+                <a href="passwords.html">Starchip Codes</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <header class="site-header">
+            <h1>Yu-Gi-Oh! Forbidden Memories Fusion Helper</h1>
+            <p class="subtitle">
+                Ein Helper, um Fusionen (inkl. möglicher Ketten-Fusionen) aus bis zu 5 Handkarten zu finden.
+            </p>
+        </header>
+
+        <section class="panel" aria-label="Eingabe">
+            <div class="help">
+                <h2>So funktioniert's</h2>
+                <ul>
+                    <li>Gib bis zu 5 Karten ein (ID oder Name) und klicke <strong>Fusionen anzeigen</strong>.</li>
+                    <li>Es werden direkte Fusionen (2 Karten) und Ketten-Fusionen (bis zu 5 Karten) angezeigt.</li>
+                    <li>Die Reihenfolge ist wichtig: Für Ketten-Fusionen siehst du einen Hinweis zur Reihenfolge.</li>
+                </ul>
+            </div>
+
+            <div id="selected-cards" class="selected-cards"></div>
+
+            <div class="input-container">
+                <div class="input-group">
+                    <input type="text" id="card1" placeholder="Karte 1 (ID oder Name)" oninput="showSuggestions(this)">
+                    <div class="suggestions"></div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="card2" placeholder="Karte 2 (ID oder Name)" oninput="showSuggestions(this)">
+                    <div class="suggestions"></div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="card3" placeholder="Karte 3 (ID oder Name)" oninput="showSuggestions(this)">
+                    <div class="suggestions"></div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="card4" placeholder="Karte 4 (ID oder Name)" oninput="showSuggestions(this)">
+                    <div class="suggestions"></div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="card5" placeholder="Karte 5 (ID oder Name)" oninput="showSuggestions(this)">
+                    <div class="suggestions"></div>
+                </div>
+
+                <div class="actions">
+                    <button onclick="showFusions()">Fusionen anzeigen</button>
+                </div>
+            </div>
+        </section>
+
+        <section aria-label="Ergebnisse">
+            <div id="fusions" class="fusion-container"></div>
+        </section>
+
+        <footer class="site-footer">
+            <div>
+                <strong>Yu-Gi-Oh! Forbidden Memories Fusion Helper</strong> · Entwickelt von <strong>Sharkey</strong> · <span id="year"></span>
+                <br>
+                Bild-Credits: <a href="https://yugipedia.com/wiki/Yugipedia" target="_blank" rel="noopener noreferrer">Yugipedia</a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="site.js?v=1"></script>
+    <script src="fusions.js?v=1"></script>
+</body>
+</html>
