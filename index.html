@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yu-Gi-Oh! Forbidden Memories Fusion Helper</title>
-    <link rel="stylesheet" href="fusions.css?v=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="fusions.css?v=2">
 </head>
 <body>
+    <div class="scanlines"></div>
     <header class="topbar">
         <div class="topbar-inner">
             <a class="brand" href="index.html" aria-label="Startseite">
@@ -35,35 +39,81 @@
                     <li>Gib bis zu 5 Karten ein (ID oder Name) und klicke <strong>Fusionen anzeigen</strong>.</li>
                     <li>Es werden direkte Fusionen (2 Karten) und Ketten-Fusionen (bis zu 5 Karten) angezeigt.</li>
                     <li>Die Reihenfolge ist wichtig: Für Ketten-Fusionen siehst du einen Hinweis zur Reihenfolge.</li>
+                    <li>Optional: Pflege deine Spielfeld-Karten, um Fusionen mit bereits ausgespielten Karten zu sehen.</li>
                 </ul>
             </div>
 
             <div id="selected-cards" class="selected-cards"></div>
 
+            <div class="section-title">Handkarten</div>
             <div class="input-container">
                 <div class="input-group">
-                    <input type="text" id="card1" placeholder="Karte 1 (ID oder Name)" oninput="showSuggestions(this)">
+                    <label for="card1" class="visually-hidden">Handkarte 1</label>
+                    <input type="text" id="card1" class="form-input" placeholder="Handkarte 1 (ID oder Name)" autocomplete="off">
                     <div class="suggestions"></div>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="card2" placeholder="Karte 2 (ID oder Name)" oninput="showSuggestions(this)">
+                    <label for="card2" class="visually-hidden">Handkarte 2</label>
+                    <input type="text" id="card2" class="form-input" placeholder="Handkarte 2 (ID oder Name)" autocomplete="off">
                     <div class="suggestions"></div>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="card3" placeholder="Karte 3 (ID oder Name)" oninput="showSuggestions(this)">
+                    <label for="card3" class="visually-hidden">Handkarte 3</label>
+                    <input type="text" id="card3" class="form-input" placeholder="Handkarte 3 (ID oder Name)" autocomplete="off">
                     <div class="suggestions"></div>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="card4" placeholder="Karte 4 (ID oder Name)" oninput="showSuggestions(this)">
+                    <label for="card4" class="visually-hidden">Handkarte 4</label>
+                    <input type="text" id="card4" class="form-input" placeholder="Handkarte 4 (ID oder Name)" autocomplete="off">
                     <div class="suggestions"></div>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="card5" placeholder="Karte 5 (ID oder Name)" oninput="showSuggestions(this)">
+                    <label for="card5" class="visually-hidden">Handkarte 5</label>
+                    <input type="text" id="card5" class="form-input" placeholder="Handkarte 5 (ID oder Name)" autocomplete="off">
                     <div class="suggestions"></div>
                 </div>
 
                 <div class="actions">
-                    <button onclick="showFusions()">Fusionen anzeigen</button>
+                    <button id="btn-show-fusions" class="btn-primary">Fusionen anzeigen</button>
+                </div>
+            </div>
+
+            <div class="section-title playfield-title" style="margin-top: 30px;">Spielfeld</div>
+            <div class="playfield-dashboard">
+                <div class="playfield-slot">
+                    <label class="slot-label" for="field1">Platz 1</label>
+                    <div class="input-group">
+                        <input type="text" id="field1" class="form-input" disabled placeholder="Spielfeldkarte 1" autocomplete="off">
+                        <div class="suggestions"></div>
+                    </div>
+                </div>
+                <div class="playfield-slot">
+                    <label class="slot-label" for="field2">Platz 2</label>
+                    <div class="input-group">
+                        <input type="text" id="field2" class="form-input" disabled placeholder="Spielfeldkarte 2" autocomplete="off">
+                        <div class="suggestions"></div>
+                    </div>
+                </div>
+                <div class="playfield-slot">
+                    <label class="slot-label" for="field3">Platz 3</label>
+                    <div class="input-group">
+                        <input type="text" id="field3" class="form-input" disabled placeholder="Spielfeldkarte 3" autocomplete="off">
+                        <div class="suggestions"></div>
+                    </div>
+                </div>
+                <div class="playfield-slot">
+                    <label class="slot-label" for="field4">Platz 4</label>
+                    <div class="input-group">
+                        <input type="text" id="field4" class="form-input" disabled placeholder="Spielfeldkarte 4" autocomplete="off">
+                        <div class="suggestions"></div>
+                    </div>
+                </div>
+                <div class="playfield-slot">
+                    <label class="slot-label" for="field5">Platz 5</label>
+                    <div class="input-group">
+                        <input type="text" id="field5" class="form-input" disabled placeholder="Spielfeldkarte 5" autocomplete="off">
+                        <div class="suggestions"></div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -71,6 +121,15 @@
         <section aria-label="Ergebnisse">
             <div id="fusions" class="fusion-container"></div>
         </section>
+
+        <div id="replace-modal" class="replace-modal" aria-hidden="true">
+            <div class="replace-modal-content" role="dialog" aria-modal="true" aria-labelledby="replace-title">
+                <h3 id="replace-title">Spielfeld ist voll</h3>
+                <p>Wähle einen Slot, der ersetzt werden soll:</p>
+                <div id="replace-options" class="replace-options"></div>
+                <button class="btn-secondary replace-cancel" type="button">Abbrechen</button>
+            </div>
+        </div>
 
         <footer class="site-footer">
             <div>
@@ -81,7 +140,9 @@
         </footer>
     </div>
 
-    <script src="site.js?v=1"></script>
-    <script src="fusions.js?v=1"></script>
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="site.js?v=2"></script>
+    <script src="fusions.js?v=2"></script>
 </body>
 </html>
