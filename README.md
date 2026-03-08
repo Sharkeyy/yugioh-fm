@@ -29,3 +29,7 @@ Statische Page mit Tools rund um **Yu-Gi-Oh! Forbidden Memories**:
 - Kartenbilder: **Yugipedia**.
 - Yu-Gi-Oh! ist ein eingetragenes Markenzeichen der jeweiligen Rechteinhaber. Dieses Projekt ist ein Fan-Projekt ohne kommerzielle Absicht.
 
+
+
+
+Karten auf dem Spielfeld werden immer als ersten genommen für die Fusion.

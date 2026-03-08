@@ -441,7 +441,15 @@ function showFusions() {
     }, {});
 
     // Helpers
-    const uniqueIds = Object.keys(selectedCounts).map(Number).sort((a, b) => a - b);
+    const sortCardsPrioritizingField = (a, b) => {
+        const aIsField = (fieldCounts[a] || 0) > 0;
+        const bIsField = (fieldCounts[b] || 0) > 0;
+        if (aIsField && !bIsField) return -1;
+        if (!aIsField && bIsField) return 1;
+        return a - b;
+    };
+
+    const uniqueIds = Object.keys(selectedCounts).map(Number).sort(sortCardsPrioritizingField);
     SHOWN_KEYS.direct.clear();
     SHOWN_KEYS.chain.clear();
     const shownDirect = SHOWN_KEYS.direct;
@@ -511,124 +519,101 @@ function showFusions() {
         return hint;
     }
 
-    function decCount(counts, id, amount = 1) {
-        counts[id] = (counts[id] || 0) - amount;
-        if (counts[id] <= 0) delete counts[id];
-    }
-
-    function incCount(counts, id, amount = 1) {
-        counts[id] = (counts[id] || 0) + amount;
-    }
-
-    // 1) Direct fusions (2 cards)
-    for (let i = 0; i < uniqueIds.length; i++) {
-        for (let j = i; j < uniqueIds.length; j++) {
-            const a = uniqueIds[i];
-            const b = uniqueIds[j];
-            if (a === b && (selectedCounts[a] || 0) < 2) continue;
-
-            const results = getFusionResults(a, b);
-            if (results.length === 0) continue;
-
-            const cardA = cardMapById[a];
-            const cardB = cardMapById[b];
-            if (!cardA || !cardB) continue;
-
-            results.forEach(resId => {
-                const resultCard = cardMapById[resId];
-                if (!resultCard) return;
-
-                const key = `${Math.min(a, b)}-${Math.max(a, b)}->${resId}`;
-                if (shownDirect.has(key)) return;
-                shownDirect.add(key);
-
-                const usesField = (fieldCounts[a] || 0) > 0 || (fieldCounts[b] || 0) > 0;
-                pushFusionRow(
-                    [cardA, cardB],
-                    resultCard,
-                    formatOrderHint([a, b]),
-                    usesField
-                );
-            });
-        }
-    }
-
-    // 2) Future fusions (chain up to 5 originals):
-    // We only ever fuse (current hidden result) + (one remaining original card)
-    // and we hide intermediate results in the UI.
     const maxCards = Math.min(5, selectedCards.length);
+    const handCountsForSearch = { ...handCounts };
 
-    function dfsChain(usedOriginalIds, intermediateId, counts) {
+    function dfsChain(usedOriginalIds, intermediateId, currentHandCounts, usesField) {
         if (usedOriginalIds.length >= maxCards) return;
 
-        const remainingIds = Object.keys(counts).map(Number).sort((a, b) => a - b);
+        const remainingIds = Object.keys(currentHandCounts).map(Number).sort((x, y) => x - y);
         for (const nextId of remainingIds) {
-            const nextResults = getFusionResults(intermediateId, nextId);
-            if (nextResults.length === 0) continue;
+            if (currentHandCounts[nextId] > 0) {
+                const nextResults = getFusionResults(intermediateId, nextId);
+                if (nextResults.length === 0) continue;
 
-            // consume one copy of nextId
-            decCount(counts, nextId, 1);
+                currentHandCounts[nextId]--;
 
-            for (const nextResId of nextResults) {
-                const newUsed = usedOriginalIds.concat([nextId]);
-                const newLen = newUsed.length;
-
-                // Dedup by multiset of originals + final result
-                const sortedUsed = newUsed.slice().sort((a, b) => a - b);
-                const chainKey = `${sortedUsed.join(',')}->${nextResId}`;
-                if (!shownChains.has(chainKey)) {
-                    shownChains.add(chainKey);
-
-                    // Important: display ingredients in the *actual fusion order* (newUsed)
-                    // so images match the order text/hint. Dedup stays order-independent.
-                    const ingredients = newUsed
-                        .map(id => cardMapById[id])
-                        .filter(Boolean);
-                    const resultCard = cardMapById[nextResId];
-                    if (ingredients.length === newLen && resultCard) {
-                        const usesField = newUsed.some(id => (fieldCounts[id] || 0) > 0);
-                        // Display: A + B + C => Y (no intermediate X shown)
-                        pushFusionRow(
-                            ingredients,
-                            resultCard,
-                            formatOrderHint(newUsed),
-                            usesField
-                        );
+                for (const nextResId of nextResults) {
+                    const newUsed = usedOriginalIds.concat([nextId]);
+                    const sortedUsed = newUsed.slice().sort((x, y) => x - y);
+                    const chainKey = `${sortedUsed.join(',')}->${nextResId}`;
+                    
+                    if (!shownChains.has(chainKey)) {
+                        shownChains.add(chainKey);
+                        const ingredients = newUsed.map(id => cardMapById[id]).filter(Boolean);
+                        const resultCard = cardMapById[nextResId];
+                        if (resultCard && ingredients.length === newUsed.length) {
+                            pushFusionRow(
+                                ingredients,
+                                resultCard,
+                                formatOrderHint(newUsed),
+                                usesField
+                            );
+                        }
                     }
+
+                    dfsChain(newUsed, nextResId, currentHandCounts, usesField);
                 }
 
-                // Continue chaining with the new intermediate (hidden result)
-                dfsChain(newUsed, nextResId, counts);
+                currentHandCounts[nextId]++;
             }
-
-            // restore
-            incCount(counts, nextId, 1);
         }
     }
 
-    // Start chains from every possible first fusion A + B => X
-    // (A and B are originals; X becomes the hidden intermediate)
-    const countsForChains = { ...selectedCounts };
-    for (let i = 0; i < uniqueIds.length; i++) {
-        for (let j = i; j < uniqueIds.length; j++) {
-            const a = uniqueIds[i];
-            const b = uniqueIds[j];
-            if (a === b && (countsForChains[a] || 0) < 2) continue;
+    function tryStartChain(a, aSource, b, bSource) {
+        const results = getFusionResults(a, b);
+        if (results.length === 0) return;
 
-            const firstResults = getFusionResults(a, b);
-            if (firstResults.length === 0) continue;
+        for (const resId of results) {
+            const resultCard = cardMapById[resId];
+            if (!resultCard) continue;
 
-            // consume A and B
-            decCount(countsForChains, a, 1);
-            decCount(countsForChains, b, 1);
-
-            for (const firstResId of firstResults) {
-                dfsChain([a, b], firstResId, countsForChains);
+            const usedOriginalIds = [a, b];
+            const sortedUsed = [a, b].sort((x, y) => x - y);
+            const key = `${sortedUsed.join(',')}->${resId}`;
+            
+            if (!shownChains.has(key)) {
+                shownChains.add(key);
+                const usesField = (aSource === 'field' || bSource === 'field');
+                pushFusionRow(
+                    [cardMapById[a], cardMapById[b]],
+                    resultCard,
+                    formatOrderHint(usedOriginalIds),
+                    usesField
+                );
             }
 
-            // restore A and B
-            incCount(countsForChains, a, 1);
-            incCount(countsForChains, b, 1);
+            dfsChain(usedOriginalIds, resId, { ...handCountsForSearch }, aSource === 'field');
+        }
+    }
+
+    // Enumerate starting pairs
+    // Case 1: Base is Field.
+    for (const aStr of Object.keys(fieldCounts)) {
+        const a = Number(aStr);
+        for (const bStr of Object.keys(handCountsForSearch)) {
+            const b = Number(bStr);
+            if (handCountsForSearch[b] > 0) {
+                handCountsForSearch[b]--;
+                tryStartChain(a, 'field', b, 'hand');
+                handCountsForSearch[b]++;
+            }
+        }
+    }
+
+    // Case 2: Base is Hand.
+    const handIds = Object.keys(handCountsForSearch).map(Number).sort((x, y) => x - y);
+    for (let i = 0; i < handIds.length; i++) {
+        const a = handIds[i];
+        for (let j = i; j < handIds.length; j++) {
+            const b = handIds[j];
+            if (a === b && handCountsForSearch[a] < 2) continue;
+
+            handCountsForSearch[a]--;
+            handCountsForSearch[b]--;
+            tryStartChain(a, 'hand', b, 'hand');
+            handCountsForSearch[a]++;
+            handCountsForSearch[b]++;
         }
     }
 
