@@ -40,12 +40,66 @@ async function loadCards() {
         [...HAND_INPUTS, ...FIELD_INPUTS].forEach(id => {
             const input = document.getElementById(id);
             if (!input) return;
+            
+            const wrapper = input.closest('.input-group');
+            
+            const updateHasValue = () => {
+                if (wrapper) wrapper.classList.toggle('has-value', input.value.length > 0);
+            };
+            
             input.addEventListener('keydown', handleSuggestionKeys);
-            input.addEventListener('input', () => showSuggestions(input));
+            input.addEventListener('input', () => {
+                showSuggestions(input);
+                updateHasValue();
+            });
+            // Initial check
+            updateHasValue();
+            
+            const clearBtn = wrapper ? wrapper.querySelector('.btn-clear') : null;
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    input.value = '';
+                    updateHasValue();
+                    updateSelectedCards();
+                    showFusions();
+                });
+            }
         });
 
         const btnShowFusions = document.getElementById('btn-show-fusions');
         if (btnShowFusions) btnShowFusions.addEventListener('click', showFusions);
+        
+        const btnClearHand = document.getElementById('btn-clear-hand');
+        if (btnClearHand) {
+            btnClearHand.addEventListener('click', () => {
+                HAND_INPUTS.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.value = '';
+                        const wrapper = input.closest('.input-group');
+                        if (wrapper) wrapper.classList.remove('has-value');
+                    }
+                });
+                updateSelectedCards();
+                showFusions();
+            });
+        }
+        
+        const btnClearField = document.getElementById('btn-clear-field');
+        if (btnClearField) {
+            btnClearField.addEventListener('click', () => {
+                FIELD_INPUTS.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.value = '';
+                        const wrapper = input.closest('.input-group');
+                        if (wrapper) wrapper.classList.remove('has-value');
+                    }
+                });
+                updateSelectedCards();
+                showFusions();
+            });
+        }
 
         const cancelBtn = document.querySelector('.replace-cancel');
         if (cancelBtn) cancelBtn.addEventListener('click', closeReplaceModal);
@@ -80,7 +134,7 @@ function getCard(input) {
 
 function showSuggestions(input) {
     const query = input.value.trim().toLowerCase();
-    const suggestionsDiv = input.nextElementSibling;
+    const suggestionsDiv = input.closest('.input-group').querySelector('.suggestions');
     suggestionsDiv.innerHTML = '';
     activeSuggestion = null;
 
@@ -114,7 +168,7 @@ function showSuggestions(input) {
 
 function applySuggestion(input, card) {
     input.value = card.Id.toString();
-    const suggestionsDiv = input.nextElementSibling;
+    const suggestionsDiv = input.closest('.input-group').querySelector('.suggestions');
     suggestionsDiv.style.display = 'none';
     activeSuggestion = null;
     updateSelectedCards();
@@ -122,7 +176,7 @@ function applySuggestion(input, card) {
 
 function handleSuggestionKeys(event) {
     const input = event.target;
-    const suggestionsDiv = input.nextElementSibling;
+    const suggestionsDiv = input.closest('.input-group').querySelector('.suggestions');
     if (!suggestionsDiv || suggestionsDiv.style.display !== 'block') {
         if (event.key === 'Enter') {
             // Quick add by exact ID
@@ -340,7 +394,16 @@ function updateSelectedCards() {
         cardDiv.innerHTML = `
             <img src="images/de/${String(card.Id).padStart(3, '0')}.webp" alt="${card.Name_DE}">
             <p>${card.Name_DE}</p>
+            <button class="btn-secondary btn-move" type="button" aria-label="Aufs Spielfeld legen">Aufs Spielfeld</button>
         `;
+        
+        const moveBtn = cardDiv.querySelector('.btn-move');
+        if (moveBtn) {
+            moveBtn.addEventListener('click', () => {
+                onFusionClick(card, [card]);
+            });
+        }
+        
         selectedCardsDiv.appendChild(cardDiv);
     });
 
