@@ -11,7 +11,7 @@ let lastSelectedCardIds = [];
 
 async function loadCards() {
     try {
-        const response = await fetch('cards_merged_de.json');
+        const response = await fetch('data/cards_merged_de.json');
         cards = await response.json();
         cards.forEach(card => {
             cardMapById[card.Id] = card;
@@ -625,5 +625,84 @@ function showFusions() {
 
 // Init
 loadCards();
+
+// WebSocket Connection für Emulator Automatisierung
+function initWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}`;
+    let ws;
+    try {
+        ws = new WebSocket(wsUrl);
+    } catch {
+        return; // Wenn die Seite rein als file:// geöffnet wird ohne Server
+    }
+
+    ws.onopen = () => {
+        console.log('Mit Emulator-Server verbunden.');
+    };
+
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'update_cards') {
+                handleEmulatorUpdate(data.payload);
+            }
+        } catch (e) {
+            console.error('Fehler beim Lesen der Websocket Daten:', e);
+        }
+    };
+
+    ws.onclose = () => {
+        setTimeout(initWebSocket, 5000);
+    };
+    
+    ws.onerror = (err) => {
+        ws.close();
+    }
+}
+
+function handleEmulatorUpdate(payload) {
+    let hasChanges = false;
+    
+    if (payload.hand && Array.isArray(payload.hand)) {
+        HAND_INPUTS.forEach((inputId, index) => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                const newValue = payload.hand[index] && payload.hand[index] > 0 ? String(payload.hand[index]) : '';
+                if (input.value !== newValue) {
+                    input.value = newValue;
+                    hasChanges = true;
+                    const wrapper = input.closest('.input-group');
+                    if (wrapper) wrapper.classList.toggle('has-value', input.value.length > 0);
+                }
+            }
+        });
+    }
+
+    if (payload.field && Array.isArray(payload.field)) {
+        FIELD_INPUTS.forEach((inputId, index) => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                const newValue = payload.field[index] && payload.field[index] > 0 ? String(payload.field[index]) : '';
+                if (input.value !== newValue) {
+                    input.value = newValue;
+                    hasChanges = true;
+                    const wrapper = input.closest('.input-group');
+                    if (wrapper) wrapper.classList.toggle('has-value', input.value.length > 0);
+                }
+            }
+        });
+    }
+
+    if (hasChanges) {
+        updateSelectedCards();
+        showFusions();
+    }
+}
+
+// Websocket erst starten, wenn wir über HTTP (auf dem Node-Server) sind
+if (window.location.protocol.startsWith('http')) {
+    initWebSocket();
+}
 
 

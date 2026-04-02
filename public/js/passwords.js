@@ -2,7 +2,7 @@ let cardNameById = new Map();
 
 async function loadCardNameMap() {
     try {
-        const res = await fetch('cards_merged_de.json');
+        const res = await fetch('data/cards_merged_de.json');
         const cards = await res.json();
         cardNameById = new Map(cards.map(c => [Number(c.Id), c.Name_DE || c.Name]));
     } catch (e) {
@@ -130,7 +130,7 @@ function renderTables(sections) {
 
 async function initPasswordsPage() {
     try {
-        const res = await fetch('cards_starchips.json');
+        const res = await fetch('data/cards_starchips.json');
         const json = await res.json();
 
         await loadCardNameMap();
