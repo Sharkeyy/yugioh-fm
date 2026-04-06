@@ -40,3 +40,5 @@ coverage/
 tools/generate_cards_starchips.py
 tools/ram_map.txt
 package-lock.json
+
+*.exe

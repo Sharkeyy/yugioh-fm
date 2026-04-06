@@ -2,7 +2,13 @@
   "name": "yugioh-fm",
   "version": "1.0.0",
   "description": "Statische Page mit Tools rund um **Yu-Gi-Oh! Forbidden Memories**:",
-  "main": "index.js",
+  "main": "server.js",
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ]
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
